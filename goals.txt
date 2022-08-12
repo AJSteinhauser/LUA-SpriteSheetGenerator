@@ -1,0 +1,12 @@
+
+
+
+
+I want a spritesheet generator that will take in sprites and output a images and code
+  + Able to handle unlimited files
+  - Files cannot be > 1024 x or y direction 
+  + outputs one module 
+  + does not waste canvas size (if the image is short do not generate full 1024 sized canvas)
+  + Earlier created sheets have precidence to be filled over newer sheets 
+  + 
+
