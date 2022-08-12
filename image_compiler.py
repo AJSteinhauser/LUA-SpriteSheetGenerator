@@ -26,9 +26,10 @@ def loadImages(path):
         if os.path.isfile(file_path):
             try:
                 print("\033[0;32mLoading: \033[4;34m" + file + "\033[0m")
-                sprites.append(Image.open(file_path))
+                loadedImage = Image.open(file_path)
+                sprites.append(loadedImage)
             except:
-                raise Exception("Failed to open " + file_path);
+                print("\033[0;31mFailed to open:\033[0;34m " + file + " \033[0;33m(PNG files work best with this program) \033[0m")
     return sprites;
 
 def findTreeSpotHelper(node, img):
@@ -40,38 +41,74 @@ def findTreeSpotHelper(node, img):
         return None;
 
 def findTreeSpot(trees, img):
-    node = None;
+    found = None;
     for tree in trees: 
-        node = findTreeSpotHelper(tree, img)
-        if node:
+        found = findTreeSpotHelper(tree, img)
+        if found:
             break;
-    if node:
-        return node;
+    if found:
+        return found;
     else:
-        node = node([0,0],image_size[:])
-        trees.append(node);
-        return node;
+        found = node([0,0],IMAGE_SIZE[:])
+        trees.append(found)
+        return found
+
+def getImageSize(current):
+    if current is None:
+        return [0,0]
+    if current.image is None:
+        return [0,0]
+    right = getImageSize(current.right)
+    down = getImageSize(current.down)
+    
+    curExtent = [current.image.size[0] + current.position[0], current.image.size[1] + current.position[1]];
+    return [max(curExtent[0],right[0],down[0]), max(curExtent[1],right[1],down[1])]
+
+
+def packImagesRecursive(current, spriteSheet):
+    if current is None:
+        return
+    if current.image is None:
+        return
+    spriteSheet.paste(current.image, box=(current.position[0],current.position[1]))
+    packImagesRecursive(current.right, spriteSheet);
+    packImagesRecursive(current.down, spriteSheet);
+
+
+def packImages(trees,name):
+    for idx,tree in enumerate(trees):
+       size = getImageSize(tree)
+       print("Spritesheet " + str(idx) + " will be " + str(size) + " pixels")
+       spriteSheet = Image.new(mode="RGBA", size=(size[0],size[1]))
+       packImagesRecursive(tree,spriteSheet)
+       if len(trees) == 1:
+           idx = ""
+       spriteSheet.save(os.path.abspath(".") + "/"  + name + str(idx) + ".png")
+       print("\033[0;32m Image wrote to: \033[0;34m" + os.path.abspath(".") + "/"  + name + str(idx) + ".png\033[0m")
+       spriteSheet.show();
 
 
 def buildTree(trees, sprites):
+    print("Building tree...")
     for img in sprites:
         if img.size[0] > IMAGE_SIZE[0] or img.size[1] > IMAGE_SIZE[1]:
             raise Exception("All images must be <= 1024 pixels in both axes" + img.filename + " is too big")
         else:
-            node = findTreeSpot(trees, img)
-            node.image = img;
-            node.right = node(
-                    [node.img.size[0] + node.position[0],node.position[1]],
-                    [IMAGE_SIZE[0] - node.img.size[0] - node.position[0], node.img.size[1]]
+            foundNode = findTreeSpot(trees, img)
+            foundNode.image = img;
+            foundNode.right = node(
+                    [foundNode.position[0] + img.size[0], foundNode.position[1]], #Position
+                    [foundNode.size[0] - img.size[0], img.size[1]] #Size
             ) 
-            node.down = node(
-                    [node.position[0], node.img.size[1] + node.position[1]],
-                    [ ]
+            foundNode.down = node(
+                    [foundNode.position[0], foundNode.position[1] + img.size[1]],#Position
+                    [foundNode.size[0], foundNode.size[1] - img.size[1]] #Size
             )
 
-def packSprites(path):
+def loadSprites(path):
     sprites = loadImages(path)
     sortImages(sprites)
+    return sprites
 
 def getName():
     name = input("Enter a name for the output spritesheet(s)\033[0;33m (Leave blank for default)\033[0m: ")
@@ -95,9 +132,13 @@ def init():
 
 def main():
     init()
-    getName()
+    name = getName()
     path = getImageFolder()
-    sprites = packSprites(path)
+    sprites = loadSprites(path)
+    trees = []
+    buildTree(trees,sprites)
+    packImages(trees,name)
+
 #packSprites("./test_images");:wqq
 
 
