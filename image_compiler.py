@@ -1,4 +1,5 @@
-
+import time
+import requests
 import os
 
 from PIL import Image
@@ -6,7 +7,20 @@ IMAGE_SIZE = [1024, 1024];
 
 
 BANNER = "\033[0;36mWelcome to reteach's SpriteSheet Generator...\033[0m"""
+LUA_HEADER = """
+local Spritesheet = require(script.Parent.Parent.Parent.Spritesheet)
 
+local {name} = {{}}
+{name}.__index = {name}
+setmetatable({name}, Spritesheet)
+
+{varibles}
+
+function {name}.new()
+	local new{name} = Spritesheet.new({name}Texture)
+	setmetatable(new{name}, {name})
+
+"""
 class node:
     def __init__(self, position, size):
         self.image = None
@@ -83,10 +97,10 @@ def packImages(trees,name):
        packImagesRecursive(tree,spriteSheet)
        if len(trees) == 1:
            idx = ""
-       spriteSheet.save(os.path.abspath(".") + "/"  + name + str(idx) + ".png")
-       print("\033[0;32m Image wrote to: \033[0;34m" + os.path.abspath(".") + "/"  + name + str(idx) + ".png\033[0m")
-       spriteSheet.show();
-
+       filePath = os.path.abspath(".") + "/"  + name + str(idx) + ".png"
+       spriteSheet.save(filePath)
+       usageTrack("imageCreated")
+       print("\033[0;32mImage wrote to: \033[0;34m" + filePath +  "\033[0m")
 
 def buildTree(trees, sprites):
     print("Building tree...")
@@ -124,10 +138,133 @@ def getImageFolder():
     print("\033[0;32mSprite folder found\033[0m")
     return "./Sprites"
 
+def getOutputType():
+    output = -1 
+    while output == -1:
+        print("How would you like the output formatted?")
+        print("\t\033[4;34m1\033[0m Lua Sprite Sheet Module Compatible \033[0;33m(recommened)\033[0m")
+        print("\t\033[4;34m2\033[0m Lua table output")
+        print("\t\033[4;34m3\033[0m No output")
+        choice = input("Enter one of the options above: ")
+        try:
+            choice = int(choice)
+            if choice > 0 and choice < 4: 
+                output = choice
+            else:
+                print("\033[0;31mPlease enter a valid choice\033[0m"'')
+        except:
+            print("\033[0;31mPlease enter a valid choice\033[0m"'')
+    return output
+
+def getSpriteModuleHelper(current,name,idx):
+    if current is None:
+        return "" 
+    if current.image is None:
+        return ""
+    fileName = os.path.basename(current.image.filename)
+    periodPos = fileName.rfind(".")
+    fileName = fileName[:periodPos]
+    right = getSpriteModuleHelper(current.right, name, idx)
+    down = getSpriteModuleHelper(current.down, name, idx)
+    return "\tnew{name}:AddSprite(\"{fname}\", Vector2.new({p1}, {p2}), Vector2.new({s1}, {s2}),{name}Sheet{idx})\n".format(
+            name = name, 
+            fname = fileName,
+            p1 = current.position[0],
+            p2 = current.position[1],
+            s1 = current.image.size[0],
+            s2 = current.image.size[1],
+            idx = idx
+    ) + right + down
+
+def genSpriteSheetModule(trees, output, name):
+    elements = ""
+    for idx,tree in enumerate(trees):
+        if len(trees) == 1:
+            idx = ""
+        elements += getSpriteModuleHelper(tree, name, str(idx))
+    output += elements + "\treturn new{name}\nend\n\nreturn {name}".format(name=name)
+    return output
+
+def imageVariblesGenerate(trees,name):
+    output = ""
+    for idx,tree in enumerate(trees):
+        if len(trees) == 1:
+            idx == ""
+        output += "local {name}Sheet{idx} = \"rbxassetid://ID_OF_{upname}{idx}_HERE\"\n".format(name=name, idx=idx, upname=name.upper())
+    return output
+         
+def generateLua(text,name):
+    try:
+        outputFile = open(name + ".lua", "w")
+        outputFile.write(text)
+        outputFile.close()
+    except E:
+        print("\033[0;31mFailed to write {name}.lua\033[0m".format(name=name))
+        raise E
+
+    filePath = os.path.abspath(".") + "/"  + name + ".lua"
+    print("\033[0;32mLua module wrote to: \033[0;34m" + filePath +  "\033[0m")
+
+
+def generateLuaOutput(outputType, name, trees):
+    outputString = ""
+    if outputType == 3:
+        usageTrack("no-output")
+        return;
+    print("\033[0;32mGenerating output...\033[0m")
+    if outputType == 1:
+        usageTrack("module-output")
+        varibles = imageVariblesGenerate(trees, name)
+        outputString = LUA_HEADER.format(name=name, varibles=varibles)
+        outputString = genSpriteSheetModule(trees, outputString, name) 
+    elif outputType == 2:
+        usageTrack("table-output")
+        outputString += imageVariblesGenerate(trees,name)
+        outputString += "\nreturn {\n"
+        outputString += generateLuaTableOutput(trees,name)
+        outputString += "}"
+    generateLua(outputString,name)
+
+
+def genLuaTableHelper(current,name,idx):
+    if current is None:
+        return "" 
+    if current.image is None:
+        return ""
+    fileName = os.path.basename(current.image.filename)
+    periodPos = fileName.rfind(".")
+    fileName = fileName[:periodPos]
+    right = genLuaTableHelper(current.right, name, idx)
+    down = genLuaTableHelper(current.down, name, idx)
+    return "\t[\"{fname}\"] = {{Sheet = {name}Sheed{idx}, Position = Vector2.new({p1}, {p2}), Size = Vector2.new({s1}, {s2})}};\n".format(
+            name = name, 
+            fname = fileName,
+            p1 = current.position[0],
+            p2 = current.position[1],
+            s1 = current.image.size[0],
+            s2 = current.image.size[1],
+            idx = idx
+    ) + right + down
+
+
+def generateLuaTableOutput(trees, name):
+    output = ""
+    for idx, tree in enumerate(trees):
+        if len(trees) == 1:
+            idx = ""
+        output += genLuaTableHelper(tree, name, idx)
+    return output
+        
+# This function goes to a counter api which lets me see how this application is being used and what features are being used most often. No personal data is being sent or anything linkable to yourself
+# Having the usage data allows me to better prioritize what features to update/make better 
+# Please don't spam the api, this is an open source tool and this data helps me tremendously 
+def usageTrack(usecase):
+    requests.get('https://api.countapi.xyz/hit/SpriteSheetGenerator_Test/' + usecase)
+
 
 def init():
     print(BANNER)
-    
+    usageTrack("start")
 
 
 def main():
@@ -138,7 +275,11 @@ def main():
     trees = []
     buildTree(trees,sprites)
     packImages(trees,name)
-
+    outputType = getOutputType()
+    generateLuaOutput(outputType,name,trees)
+    print("Finished...")
+    usageTrack("finished")
+    time.sleep(1)   
 #packSprites("./test_images");:wqq
 
 
