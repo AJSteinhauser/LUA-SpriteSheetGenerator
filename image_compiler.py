@@ -1,6 +1,7 @@
 import time
 import requests
 import os
+import sys
 
 from PIL import Image
 IMAGE_SIZE = [1024, 1024];
@@ -8,7 +9,7 @@ IMAGE_SIZE = [1024, 1024];
 
 BANNER = "\033[0;36mWelcome to reteach's SpriteSheet Generator...\033[0m"""
 LUA_HEADER = """
-local Spritesheet = require(script.Parent.Parent.Parent.Spritesheet)
+local Spritesheet = require(script:FindFirstAncestorWhichIsA("ModuleScript").Spritesheet)
 
 local {name} = {{}}
 {name}.__index = {name}
@@ -17,7 +18,7 @@ setmetatable({name}, Spritesheet)
 {varibles}
 
 function {name}.new()
-	local new{name} = Spritesheet.new({name}Texture)
+	local new{name} = Spritesheet.new()
 	setmetatable(new{name}, {name})
 
 """
@@ -88,8 +89,16 @@ def packImagesRecursive(current, spriteSheet):
     packImagesRecursive(current.right, spriteSheet);
     packImagesRecursive(current.down, spriteSheet);
 
+def getOutputFolder(path):
+    name = "/output"
+    ext = 0
+    while os.path.exists(path + name + str(ext)):
+        ext += 1
 
-def packImages(trees,name):
+    os.mkdir(path + name + str(ext))
+    return path + name + str(ext)
+
+def packImages(trees,name,output):
     for idx,tree in enumerate(trees):
        size = getImageSize(tree)
        print("Spritesheet " + str(idx) + " will be " + str(size) + " pixels")
@@ -97,7 +106,7 @@ def packImages(trees,name):
        packImagesRecursive(tree,spriteSheet)
        if len(trees) == 1:
            idx = ""
-       filePath = os.path.abspath(".") + "/"  + name + str(idx) + ".png"
+       filePath = output + "/"  + name + str(idx) + ".png"
        spriteSheet.save(filePath)
        usageTrack("imageCreated")
        print("\033[0;32mImage wrote to: \033[0;34m" + filePath +  "\033[0m")
@@ -125,18 +134,22 @@ def loadSprites(path):
     return sprites
 
 def getName():
-    name = input("Enter a name for the output spritesheet(s)\033[0;33m (Leave blank for default)\033[0m: ")
+    name = input("Enter a name for the output spritesheet(s)\033[0;33m (Naming your spritesheet is important for referencing it later in lua)\033[0m: ")
     return name if name != "" else "untitled"
 
 def getImageFolder():
     #spritesFolder = os.path.exists("./Sprites") if 
-    while not os.path.exists("./Sprites"):
-        print("\033[0;31mSprite folder not found\033[0m")   
-        print("Please create a folder named \033[0;31m\"Sprites\"\033[0m in the parent directory \033[0;33m(This folder should contain the images you want on the spritesheet)\033[0m")
-        print("\033[0;33m" + os.getcwd() + "\033[0;31m/Sprites\033[0m")
-        input("Press \033[0;32mEnter\033[0m to continue...")
-    print("\033[0;32mSprite folder found\033[0m")
-    return "./Sprites"
+    if len(sys.argv) > 1:
+        return sys.argv[1]
+    else:
+        sys.exit("\033[0;31mMust supply a source file\n\033[0;33mpython3 spritesheet.py sourcefilehere\033[0m")
+       # while not os.path.exists("./Sprites"):
+       #     print("\033[0;31mSprite folder not found\033[0m")   
+       #     print("Please create a folder named \033[0;31m\"Sprites\"\033[0m in the parent directory \033[0;33m(This folder should contain the images you want on the spritesheet)\033[0m")
+       #     print("\033[0;33m" + os.getcwd() + "\033[0;31m/Sprites\033[0m")
+       #     input("Press \033[0;32mEnter\033[0m to continue...")
+       # print("\033[0;32mSprite folder found\033[0m")
+       # return "./Sprites"
 
 def getOutputType():
     output = -1 
@@ -166,7 +179,7 @@ def getSpriteModuleHelper(current,name,idx):
     fileName = fileName[:periodPos]
     right = getSpriteModuleHelper(current.right, name, idx)
     down = getSpriteModuleHelper(current.down, name, idx)
-    return "\tnew{name}:AddSprite(\"{fname}\", Vector2.new({p1}, {p2}), Vector2.new({s1}, {s2}),{name}Sheet{idx})\n".format(
+    return "\tnew{name}:AddSprite(\"{fname}\", Vector2.new({p1}, {p2}), Vector2.new({s1}, {s2}), {name}Sheet{idx})\n".format(
             name = name, 
             fname = fileName,
             p1 = current.position[0],
@@ -193,20 +206,20 @@ def imageVariblesGenerate(trees,name):
         output += "local {name}Sheet{idx} = \"rbxassetid://ID_OF_{upname}{idx}_HERE\"\n".format(name=name, idx=idx, upname=name.upper())
     return output
          
-def generateLua(text,name):
+def generateLua(text,name, outputFolder):
     try:
-        outputFile = open(name + ".lua", "w")
+        outputFile = open(outputFolder+ "/" + name + ".lua", "w")
         outputFile.write(text)
         outputFile.close()
     except E:
         print("\033[0;31mFailed to write {name}.lua\033[0m".format(name=name))
         raise E
 
-    filePath = os.path.abspath(".") + "/"  + name + ".lua"
+    filePath = outputFolder+ "/" + name + ".lua"
     print("\033[0;32mLua module wrote to: \033[0;34m" + filePath +  "\033[0m")
 
 
-def generateLuaOutput(outputType, name, trees):
+def generateLuaOutput(outputType, name, trees, outputFolder):
     outputString = ""
     if outputType == 3:
         usageTrack("no-output")
@@ -223,7 +236,7 @@ def generateLuaOutput(outputType, name, trees):
         outputString += "\nreturn {\n"
         outputString += generateLuaTableOutput(trees,name)
         outputString += "}"
-    generateLua(outputString,name)
+    generateLua(outputString,name, outputFolder)
 
 
 def genLuaTableHelper(current,name,idx):
@@ -236,7 +249,7 @@ def genLuaTableHelper(current,name,idx):
     fileName = fileName[:periodPos]
     right = genLuaTableHelper(current.right, name, idx)
     down = genLuaTableHelper(current.down, name, idx)
-    return "\t[\"{fname}\"] = {{Sheet = {name}Sheed{idx}, Position = Vector2.new({p1}, {p2}), Size = Vector2.new({s1}, {s2})}};\n".format(
+    return "\t[\"{fname}\"] = {{Sheet = {name}Sheet{idx}, Position = Vector2.new({p1}, {p2}), Size = Vector2.new({s1}, {s2})}};\n".format(
             name = name, 
             fname = fileName,
             p1 = current.position[0],
@@ -274,9 +287,10 @@ def main():
     sprites = loadSprites(path)
     trees = []
     buildTree(trees,sprites)
-    packImages(trees,name)
+    outputFolder = getOutputFolder(path)
+    packImages(trees,name, outputFolder)
     outputType = getOutputType()
-    generateLuaOutput(outputType,name,trees)
+    generateLuaOutput(outputType,name,trees, outputFolder)
     print("Finished...")
     usageTrack("finished")
     time.sleep(1)   
