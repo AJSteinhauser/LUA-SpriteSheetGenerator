@@ -142,7 +142,7 @@ def getImageFolder():
     if len(sys.argv) > 1:
         return sys.argv[1]
     else:
-        sys.exit("\033[0;31mMust supply a source file\n\033[0;33mpython3 spritesheet.py sourcefilehere\033[0m")
+        sys.exit("\033[0;31mMust supply a source file\n\033[0;33mExample: luasprite [sourcefilehere]\033[0m")
        # while not os.path.exists("./Sprites"):
        #     print("\033[0;31mSprite folder not found\033[0m")   
        #     print("Please create a folder named \033[0;31m\"Sprites\"\033[0m in the parent directory \033[0;33m(This folder should contain the images you want on the spritesheet)\033[0m")
@@ -294,7 +294,4 @@ def main():
     print("Finished...")
     usageTrack("finished")
     time.sleep(1)   
-#packSprites("./test_images");:wqq
 
-
-main()
