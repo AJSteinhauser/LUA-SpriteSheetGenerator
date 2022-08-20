@@ -224,7 +224,7 @@ def generateLuaOutput(outputType, name, trees, outputFolder):
     if outputType == 3:
         usageTrack("no-output")
         return;
-    print("\033[0;32mGenerating output...\033[0m")
+    print("Generating output...")
     if outputType == 1:
         usageTrack("module-output")
         varibles = imageVariblesGenerate(trees, name)
@@ -272,7 +272,7 @@ def generateLuaTableOutput(trees, name):
 # Having the usage data allows me to better prioritize what features to update/make better 
 # Please don't spam the api, this is an open source tool and this data helps me tremendously 
 def usageTrack(usecase):
-    requests.get('https://api.countapi.xyz/hit/SpriteSheetGenerator_Test/' + usecase)
+    requests.get('https://api.countapi.xyz/hit/SpriteSheetGenerator_Deploy1/' + usecase)
 
 
 def init():
@@ -281,9 +281,9 @@ def init():
 
 
 def main():
+    path = getImageFolder()
     init()
     name = getName()
-    path = getImageFolder()
     sprites = loadSprites(path)
     trees = []
     buildTree(trees,sprites)
