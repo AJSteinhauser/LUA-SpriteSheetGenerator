@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name = 'LUASprites',
-    version = '0.0.18',
+    version = '0.0.22',
     author = 'AJ Steinhauser',
     author_email = 'ajsteinhauser11@gmail.com',
     license = 'MIT License',
@@ -16,7 +16,8 @@ setup(
     long_description = long_description,
     long_description_content_type = "text/markdown",
     url = 'https://github.com/AJSteinhauser/LUASprites',
-    packages = find_packages(),
+    package_dir = {"": "src"},
+    packages=['spritegen'],
     include_package_data=True,
     install_requires = [requirements],
     python_requires='>=3.7',
@@ -26,6 +27,6 @@ setup(
     ],
     entry_points = '''
         [console_scripts]
-        luasprite=src.spritegen.cli:main
+        luasprite=spritegen.cli:main
     '''
 )

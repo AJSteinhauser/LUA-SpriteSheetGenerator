@@ -1,7 +1,4 @@
 
-
-
-
 I want a spritesheet generator that will take in sprites and output a images and code
   + Able to handle unlimited files
   - Files cannot be > 1024 x or y direction 

@@ -1,5 +1,7 @@
 import time
 import requests
+from colorama import Fore, Back, Style
+import colorama
 import os
 import sys
 
@@ -7,7 +9,9 @@ from PIL import Image
 IMAGE_SIZE = [1024, 1024];
 
 
-BANNER = "\033[0;36mWelcome to reteach's SpriteSheet Generator...\033[0m"""
+colorama.init(autoreset=True)
+
+BANNER = Fore.CYAN + "Welcome to reteach's SpriteSheet Generator..."""
 LUA_HEADER = """
 local Spritesheet = require(script:FindFirstAncestorWhichIsA("ModuleScript").Spritesheet)
 
@@ -40,11 +44,11 @@ def loadImages(path):
         file_path = os.path.join(path, file)
         if os.path.isfile(file_path):
             try:
-                print("\033[0;32mLoading: \033[4;34m" + file + "\033[0m")
+                print(Fore.GREEN + "Loading: " + Fore.BLUE  + file)
                 loadedImage = Image.open(file_path)
                 sprites.append(loadedImage)
             except:
-                print("\033[0;31mFailed to open:\033[0;34m " + file + " \033[0;33m(PNG files work best with this program) \033[0m")
+                print(Fore.RED + "Failed to open: " + Fore.BLUE  + file + Style.RESET_ALL + Fore.YELLOW + "(PNG files work best with this program)")
     return sprites;
 
 def findTreeSpotHelper(node, img):
@@ -109,7 +113,7 @@ def packImages(trees,name,output):
        filePath = output + "/"  + name + str(idx) + ".png"
        spriteSheet.save(filePath)
        usageTrack("imageCreated")
-       print("\033[0;32mImage wrote to: \033[0;34m" + filePath +  "\033[0m")
+       print(Fore.GREEN + "Image wrote to: \033[0;34m" + Fore.BLUE +  filePath)
 
 def buildTree(trees, sprites):
     print("Building tree...")
@@ -134,7 +138,7 @@ def loadSprites(path):
     return sprites
 
 def getName():
-    name = input("Enter a name for the output spritesheet(s)\033[0;33m (Naming your spritesheet is important for referencing it later in lua)\033[0m: ")
+    name = input("Enter a name for the output spritesheet(s) " + Fore.YELLOW + "(Naming your spritesheet is important for referencing it later in lua): ")
     return name if name != "" else "untitled"
 
 def getImageFolder():
@@ -142,7 +146,7 @@ def getImageFolder():
     if len(sys.argv) > 1:
         return sys.argv[1]
     else:
-        sys.exit("\033[0;31mMust supply a source file\n\033[0;33mExample: luasprite [sourcefilehere]\033[0m")
+        sys.exit(Fore.RED + "Must supply a source file\n" + Fore.YELLOW  + "Example: luasprite [sourcefilehere]")
        # while not os.path.exists("./Sprites"):
        #     print("\033[0;31mSprite folder not found\033[0m")   
        #     print("Please create a folder named \033[0;31m\"Sprites\"\033[0m in the parent directory \033[0;33m(This folder should contain the images you want on the spritesheet)\033[0m")
@@ -155,18 +159,18 @@ def getOutputType():
     output = -1 
     while output == -1:
         print("How would you like the output formatted?")
-        print("\t\033[4;34m1\033[0m Lua Sprite Sheet Module Compatible \033[0;33m(recommened)\033[0m")
-        print("\t\033[4;34m2\033[0m Lua table output")
-        print("\t\033[4;34m3\033[0m No output")
+        print(Fore.BLUE + Style.BRIGHT +"\t1" + Style.RESET_ALL + " Lua Sprite Sheet Module Compatible" + Fore.YELLOW +"(recommened)")
+        print(Fore.BLUE + Style.BRIGHT +"\t2" + Style.RESET_ALL + " Lua table output")
+        print(Fore.BLUE + Style.BRIGHT +"\t3" + Style.RESET_ALL + " No output")
         choice = input("Enter one of the options above: ")
         try:
             choice = int(choice)
             if choice > 0 and choice < 4: 
                 output = choice
             else:
-                print("\033[0;31mPlease enter a valid choice\033[0m"'')
+                print(Fore.RED + "Please enter a valid choice")
         except:
-            print("\033[0;31mPlease enter a valid choice\033[0m"'')
+            print(Fore.RED + "Please enter a valid choice")
     return output
 
 def getSpriteModuleHelper(current,name,idx):
@@ -212,11 +216,11 @@ def generateLua(text,name, outputFolder):
         outputFile.write(text)
         outputFile.close()
     except E:
-        print("\033[0;31mFailed to write {name}.lua\033[0m".format(name=name))
+        print(Fore.RED + "Failed to write {name}.lua".format(name=name))
         raise E
 
     filePath = outputFolder+ "/" + name + ".lua"
-    print("\033[0;32mLua module wrote to: \033[0;34m" + filePath +  "\033[0m")
+    print(Fore.BLUE + "Lua module wrote to: " + Fore.GREEN + filePath)
 
 
 def generateLuaOutput(outputType, name, trees, outputFolder):
