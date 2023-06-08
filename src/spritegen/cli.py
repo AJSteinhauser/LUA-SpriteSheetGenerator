@@ -112,7 +112,6 @@ def packImages(trees,name,output):
            idx = ""
        filePath = output + "/"  + name + str(idx) + ".png"
        spriteSheet.save(filePath)
-       usageTrack("imageCreated")
        print(Fore.GREEN + "Image wrote to: \033[0;34m" + Fore.BLUE +  filePath)
 
 def buildTree(trees, sprites):
@@ -226,16 +225,13 @@ def generateLua(text,name, outputFolder):
 def generateLuaOutput(outputType, name, trees, outputFolder):
     outputString = ""
     if outputType == 3:
-        usageTrack("no-output")
         return;
     print("Generating output...")
     if outputType == 1:
-        usageTrack("module-output")
         varibles = imageVariblesGenerate(trees, name)
         outputString = LUA_HEADER.format(name=name, varibles=varibles)
         outputString = genSpriteSheetModule(trees, outputString, name) 
     elif outputType == 2:
-        usageTrack("table-output")
         outputString += imageVariblesGenerate(trees,name)
         outputString += "\nreturn {\n"
         outputString += generateLuaTableOutput(trees,name)
@@ -271,18 +267,9 @@ def generateLuaTableOutput(trees, name):
             idx = ""
         output += genLuaTableHelper(tree, name, idx)
     return output
-        
-# This function goes to a counter api which lets me see how this application is being used and what features are being used most often. No personal data is being sent or anything linkable to yourself
-# Having the usage data allows me to better prioritize what features to update/make better 
-# Please don't spam the api, this is an open source tool and this data helps me tremendously 
-def usageTrack(usecase):
-    return 0
-    #requests.get('https://api.countapi.xyz/hit/SpriteSheetGenerator_Deploy1/' + usecase)
-
 
 def init():
     print(BANNER)
-    usageTrack("start")
 
 def main():
     path = getImageFolder()
@@ -296,6 +283,5 @@ def main():
     outputType = getOutputType()
     generateLuaOutput(outputType,name,trees, outputFolder)
     print("Finished...")
-    usageTrack("finished")
     time.sleep(1)   
 

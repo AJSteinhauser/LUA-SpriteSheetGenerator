@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name = 'LUASprites',
-    version = '0.0.24',
+    version = '0.0.26',
     author = 'AJ Steinhauser',
     author_email = 'ajsteinhauser11@gmail.com',
     license = 'MIT License',
