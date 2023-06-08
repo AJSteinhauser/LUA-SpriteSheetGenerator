@@ -275,14 +275,14 @@ def generateLuaTableOutput(trees, name):
 # This function goes to a counter api which lets me see how this application is being used and what features are being used most often. No personal data is being sent or anything linkable to yourself
 # Having the usage data allows me to better prioritize what features to update/make better 
 # Please don't spam the api, this is an open source tool and this data helps me tremendously 
-#def usageTrack(usecase):
+def usageTrack(usecase):
+    return 0
     #requests.get('https://api.countapi.xyz/hit/SpriteSheetGenerator_Deploy1/' + usecase)
 
 
 def init():
     print(BANNER)
     usageTrack("start")
-
 
 def main():
     path = getImageFolder()
