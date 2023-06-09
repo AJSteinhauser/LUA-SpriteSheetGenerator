@@ -284,4 +284,3 @@ def main():
     generateLuaOutput(outputType,name,trees, outputFolder)
     print("Finished...")
     time.sleep(1)   
-
